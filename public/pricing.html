@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unmark Me — Pricing</title>
+  <meta name="description" content="Unmark Me plans: start free, upgrade to Pro or Max when you need more.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#f5f5f7">
+  <script>
+    // Apply the saved (or system) theme before first paint so the page never flashes.
+    (() => {
+      let saved = null;
+      try { saved = localStorage.getItem('unmark-theme'); } catch (error) {}
+      const dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      document.querySelector('meta[name="theme-color"]').content = dark ? '#000000' : '#f5f5f7';
+    })();
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231d1d1f'/%3E%3Cpath d='M16 7.5l-2 6.5-6.5 2 6.5 2 2 6.5 2-6.5 6.5-2-6.5-2z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="dev-preview.css">
+  <link rel="stylesheet" href="pricing.css">
+</head>
+<body data-view="pricing">
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="./" class="brand" aria-label="Unmark Me home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3.5l-1.7 5.3-5.3 1.7 5.3 1.7 1.7 5.3 1.7-5.3 5.3-1.7-5.3-1.7z"/></svg>
+        </span>
+        <span class="brand-name">Unmark Me</span>
+      </a>
+      <div class="nav-end">
+        <nav class="nav-links" aria-label="Main">
+          <a href="./" class="nav-link">Images</a>
+          <a href="./video-preview.html" class="nav-link">Video</a>
+          <a href="./pricing.html" class="nav-link" aria-current="page">Pricing</a>
+        </nav>
+        <button id="themeSwitch" class="theme-pull" type="button" role="switch" aria-checked="false" aria-label="Dark mode">
+          <span class="theme-pull-cord" aria-hidden="true"></span>
+          <span class="theme-pull-bulb" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page pricing">
+    <header class="pricing-header">
+      <h1 class="pricing-title">Simple pricing.</h1>
+      <p class="pricing-lede">Start free. Upgrade when you need more.</p>
+      <div class="billing" role="radiogroup" aria-label="Billing period">
+        <button type="button" role="radio" aria-checked="true" data-billing="monthly">Monthly</button>
+        <button type="button" role="radio" aria-checked="false" data-billing="annual" tabindex="-1">Annual <span class="billing-save">Save up to 36%</span></button>
+      </div>
+    </header>
+
+    <div class="plans">
+      <article class="plan" aria-labelledby="plan-free">
+        <div class="plan-head">
+          <h2 id="plan-free" class="plan-name">Free</h2>
+          <p class="plan-tagline">Try it</p>
+        </div>
+        <p class="plan-price"><span class="plan-amount">$0</span><span class="plan-period">forever</span></p>
+        <p class="plan-note">3 images + 1 video/day</p>
+        <a class="btn btn-secondary plan-cta" href="./">Get Started</a>
+        <ul class="plan-features">
+          <li>3 image removals every day</li>
+          <li>1 video removal every day</li>
+          <li>Image &amp; video support</li>
+          <li>Local, private processing</li>
+          <li>Standard processing</li>
+        </ul>
+      </article>
+
+      <article class="plan plan--featured" aria-labelledby="plan-pro">
+        <span class="plan-badge">Most Popular</span>
+        <div class="plan-head">
+          <h2 id="plan-pro" class="plan-name">Pro</h2>
+          <p class="plan-tagline">Regular usage</p>
+        </div>
+        <p class="plan-price">
+          <span class="plan-amount" data-monthly="$12.99" data-annual="$99.99">$12.99</span><span class="plan-period" data-monthly="/month" data-annual="/year">/month</span>
+        </p>
+        <p class="plan-note" data-monthly="$99.99/year · Save 36%" data-annual="$8.33/month, billed yearly · Save 36%">$99.99/year · Save 36%</p>
+        <button type="button" class="btn btn-primary plan-cta" data-plan="Pro">Upgrade to Pro</button>
+        <ul class="plan-features">
+          <li>200 image removals/month</li>
+          <li>100 video removals/month</li>
+          <li>Faster processing</li>
+          <li>No ads</li>
+          <li>Priority support</li>
+          <li>Everything in Free</li>
+        </ul>
+      </article>
+
+      <article class="plan" aria-labelledby="plan-max">
+        <div class="plan-head">
+          <h2 id="plan-max" class="plan-name">Max</h2>
+          <p class="plan-tagline">Heavy usage</p>
+        </div>
+        <p class="plan-price">
+          <span class="plan-amount" data-monthly="$24.99" data-annual="$199.99">$24.99</span><span class="plan-period" data-monthly="/month" data-annual="/year">/month</span>
+        </p>
+        <p class="plan-note" data-monthly="$199.99/year · Save 33%" data-annual="$16.67/month, billed yearly · Save 33%">$199.99/year · Save 33%</p>
+        <button type="button" class="btn btn-secondary plan-cta" data-plan="Max">Go Max</button>
+        <ul class="plan-features">
+          <li>Unlimited image removals*</li>
+          <li>Unlimited video removals*</li>
+          <li>Fastest processing</li>
+          <li>Priority processing</li>
+          <li>No ads</li>
+          <li>Priority support</li>
+          <li>Everything in Pro</li>
+        </ul>
+      </article>
+    </div>
+
+    <p class="pricing-foot">
+      *Subject to reasonable fair-use limits. ·
+      <button type="button" class="link-button" id="compareOpen">Compare all features</button>
+    </p>
+  </main>
+
+  <footer class="footer">
+    <p>An application made by <span class="footer-name">Taksh Waghela</span></p>
+  </footer>
+
+  <dialog id="compareDialog" class="sheet" aria-labelledby="compareTitle">
+    <div class="sheet-head">
+      <h2 id="compareTitle" class="sheet-title">Compare plans</h2>
+      <button type="button" class="sheet-close" id="compareClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <table class="compare">
+        <thead>
+          <tr><th scope="col"><span class="visually-hidden">Feature</span></th><th scope="col">Free</th><th scope="col">Pro</th><th scope="col">Max</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Monthly</th><td>$0</td><td>$12.99/mo</td><td>$24.99/mo</td></tr>
+          <tr><th scope="row">Annual</th><td>$0</td><td>$99.99/yr</td><td>$199.99/yr</td></tr>
+          <tr><th scope="row">Annual saving</th><td><span class="no" aria-label="None">—</span></td><td>Save 36%</td><td>Save 33%</td></tr>
+          <tr><th scope="row">Image removals</th><td>3/day</td><td>200/month</td><td>Unlimited*</td></tr>
+          <tr><th scope="row">Video removals</th><td>1/day</td><td>100/month</td><td>Unlimited*</td></tr>
+          <tr><th scope="row">Local processing</th><td><span class="yes" role="img" aria-label="Included"></span></td><td><span class="yes" role="img" aria-label="Included"></span></td><td><span class="yes" role="img" aria-label="Included"></span></td></tr>
+          <tr><th scope="row">Image + Video</th><td><span class="yes" role="img" aria-label="Included"></span></td><td><span class="yes" role="img" aria-label="Included"></span></td><td><span class="yes" role="img" aria-label="Included"></span></td></tr>
+          <tr><th scope="row">Standard processing</th><td><span class="yes" role="img" aria-label="Included"></span></td><td><span class="no" aria-label="Not included">—</span></td><td><span class="no" aria-label="Not included">—</span></td></tr>
+          <tr><th scope="row">Faster processing</th><td><span class="no" aria-label="Not included">—</span></td><td><span class="yes" role="img" aria-label="Included"></span></td><td><span class="yes" role="img" aria-label="Included"></span></td></tr>
+          <tr><th scope="row">Priority processing</th><td><span class="no" aria-label="Not included">—</span></td><td><span class="no" aria-label="Not included">—</span></td><td><span class="yes" role="img" aria-label="Included"></span></td></tr>
+          <tr><th scope="row">Ad-free</th><td><span class="no" aria-label="Not included">—</span></td><td><span class="yes" role="img" aria-label="Included"></span></td><td><span class="yes" role="img" aria-label="Included"></span></td></tr>
+          <tr><th scope="row">Priority support</th><td><span class="no" aria-label="Not included">—</span></td><td><span class="yes" role="img" aria-label="Included"></span></td><td><span class="yes" role="img" aria-label="Included"></span></td></tr>
+        </tbody>
+      </table>
+      <p class="sheet-foot">*Subject to reasonable fair-use limits.</p>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="pricing-app.js"></script>
+</body>
+</html>

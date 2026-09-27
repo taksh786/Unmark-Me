@@ -939,6 +939,10 @@ body[data-view="batch"] .hero { display: none; }
   .batch-list { overflow: visible; }
 }
 
+@media (max-width: 420px) {
+  .brand-name { display: none; }
+}
+
 /* ---------- Accessibility preferences ---------- */
 
 @media (prefers-reduced-motion: reduce) {

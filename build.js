@@ -153,6 +153,8 @@ function cleanDistBuildOutputs() {
     'extension',
     'extension-local',
     'index.html',
+    'pricing-app.js',
+    'pricing.html',
     'tampermonkey-worker-probe.html',
     'tampermonkey-worker-probe.user.js',
     'video-app.js',
@@ -314,6 +316,16 @@ const videoWebsiteCtx = await esbuild.context({
   sourcemap: !isProd,
 });
 
+const pricingWebsiteCtx = await esbuild.context({
+  ...commonConfig,
+  entryPoints: ['src/pricing-app.js'],
+  outfile: 'dist/pricing-app.js',
+  platform: 'browser',
+  target: ['es2020'],
+  banner: { js: jsBanner },
+  sourcemap: !isProd,
+});
+
 // Build website worker
 const workerCtx = await esbuild.context({
   ...commonConfig,
@@ -413,6 +425,7 @@ if (isProd) {
   await Promise.all([
     websiteCtx.rebuild(),
     videoWebsiteCtx.rebuild(),
+    pricingWebsiteCtx.rebuild(),
     workerCtx.rebuild(),
     userscriptCtx.rebuild(),
     extensionMainCtx.rebuild(),
@@ -427,6 +440,7 @@ if (isProd) {
   await Promise.all([
     websiteCtx.watch(),
     videoWebsiteCtx.watch(),
+    pricingWebsiteCtx.watch(),
     workerCtx.watch(),
     userscriptCtx.watch(),
     extensionMainCtx.watch(),

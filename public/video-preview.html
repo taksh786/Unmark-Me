@@ -733,6 +733,10 @@
       .actions .primary, .actions .download-link { order: -1; flex-basis: 40%; }
     }
 
+    @media (max-width: 420px) {
+      .brand-name { display: none; }
+    }
+
     /* ---------- Accessibility preferences ---------- */
 
     @media (prefers-reduced-motion: reduce) {
@@ -762,6 +766,7 @@
         <nav class="nav-links" aria-label="Main">
           <a href="./" class="nav-link">Images</a>
           <a href="./video-preview.html" class="nav-link" aria-current="page">Video</a>
+          <a href="./pricing.html" class="nav-link">Pricing</a>
         </nav>
         <button id="themeSwitch" class="theme-pull" type="button" role="switch" aria-checked="false" aria-label="Dark mode">
           <span class="theme-pull-cord" aria-hidden="true"></span>

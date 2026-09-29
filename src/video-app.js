@@ -35,6 +35,7 @@ import {
     saveDebugFileHandoff
 } from './shared/debugFileHandoff.js';
 import { createAllenkFdncnnOnnxRuntime } from './core/allenkFdncnnOnnxRuntime.js';
+import { mountAccountMenu } from './shared/accountMenu.js';
 import { mountThemeSwitch } from './shared/themeSwitch.js';
 
 const $ = (id) => document.getElementById(id);
@@ -1070,4 +1071,5 @@ async function init() {
 }
 
 mountThemeSwitch(document.getElementById('themeSwitch'));
+mountAccountMenu(document.getElementById('accountButton'));
 init();

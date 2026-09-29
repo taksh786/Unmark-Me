@@ -1,3 +1,4 @@
+import { mountAccountMenu } from './shared/accountMenu.js';
 import { mountThemeSwitch } from './shared/themeSwitch.js';
 
 const billingButtons = [...document.querySelectorAll('.billing [role="radio"]')];
@@ -72,6 +73,7 @@ function centerFeaturedPlan() {
 }
 
 mountThemeSwitch(document.getElementById('themeSwitch'));
+mountAccountMenu(document.getElementById('accountButton'));
 setBilling('monthly');
 setupBilling();
 setupPlanButtons();

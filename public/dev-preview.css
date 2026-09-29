@@ -50,9 +50,9 @@
   --base: 240ms;
   --slow: 480ms;
 
-  /* Vertical space taken by nav, page padding, footer and viewer padding.
+  /* Vertical space taken by nav, page padding and viewer padding.
      The comparison image gets the rest so the page never scrolls. */
-  --chrome: 172px;
+  --chrome: 127px;
 
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -301,7 +301,7 @@ img { -webkit-user-drag: none; }
   padding: 24px;
 }
 
-/* Home view: hero centred in the space between nav and footer. */
+/* Home view: hero centred in the space below the nav. */
 .hero {
   width: 100%;
   max-width: 880px;
@@ -837,23 +837,6 @@ body[data-view="batch"] .hero { display: none; }
   margin-top: auto;
 }
 
-/* ---------- Footer ---------- */
-
-.footer {
-  max-width: 1120px;
-  width: calc(100% - 48px);
-  flex: none;
-  margin: 0 auto;
-  padding: 12px 0 14px;
-  border-top: 1px solid var(--separator);
-  text-align: center;
-  font-size: 0.75rem;
-  line-height: 1.5;
-  color: var(--label-3);
-}
-
-.footer-name { color: var(--label-2); font-weight: 500; }
-
 /* ---------- Loading overlay ---------- */
 
 .loading-overlay {
@@ -911,7 +894,7 @@ body[data-view="batch"] .hero { display: none; }
 
 @media (max-width: 900px) {
   /* Stacked: image on top, a compact action bar below it. */
-  :root { --chrome: 372px; }
+  :root { --chrome: 327px; }
   .workspace { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .inspector { padding: 20px; }
   .meta-row { display: none; }
@@ -923,7 +906,7 @@ body[data-view="batch"] .hero { display: none; }
 @media (max-width: 600px) {
   .nav-inner { padding: 0 16px; }
   .nav-link { padding: 6px 10px; }
-  :root { --chrome: 332px; }
+  :root { --chrome: 287px; }
   .page { padding: 16px; }
   .dropzone { padding-left: 20px; padding-right: 20px; border-radius: var(--radius-lg); }
   .dropzone::after { border-radius: calc(var(--radius-lg) - 10px); }
@@ -931,7 +914,6 @@ body[data-view="batch"] .hero { display: none; }
   .inspector { padding: 16px; }
   .btn { font-size: 1rem; padding: 0 16px; }
   .batch-list { grid-template-columns: 1fr; }
-  .footer { width: calc(100% - 32px); }
 }
 
 @media (max-height: 540px) {

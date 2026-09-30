@@ -207,6 +207,7 @@
     ]
   },
   "dependencies": {
-    "mediabunny": "^1.46.0"
+    "mediabunny": "^1.46.0",
+    "pg": "^8.23.0"
   }
 }

@@ -1,41 +1,32 @@
 // Log in button, sign-in sheet and profile menu, shared by every page.
 //
-// No sign-in service is connected yet: `getAccount()` returns null and the
-// sign-in options explain that sign-in is coming soon. When a provider
-// (Supabase, Clerk, …) is added, implement `getAccount`, `signIn` and
-// `signOut` against it and the UI below works unchanged.
+// Email sign-in uses a one-time code: the server emails a 6-digit code, the
+// user types it here, and the server sets an HttpOnly session cookie (see
+// src/server/auth.js). Google sign-in is not connected yet.
 //
 // Unmark Me keeps no history: the profile shows who you are and your plan,
 // nothing about the files you process.
 
-const PREVIEW_PARAM = 'preview-account';
+const GOOGLE_COMING_SOON = 'Google sign-in is coming soon. Use your email for now.';
+const UNAVAILABLE = 'Sign-in is not available right now. Unmark Me works without an account in the meantime.';
 
-// Lets the signed-in profile be reviewed locally before sign-in exists.
-const PREVIEW_ACCOUNT = Object.freeze({
-    name: 'Alex Appleseed',
-    email: 'alex@example.com',
-    plan: 'Free'
-});
-
-function isLocalPreview() {
-    const localHosts = ['localhost', '127.0.0.1', '[::1]'];
-    return localHosts.includes(location.hostname)
-        && new URLSearchParams(location.search).has(PREVIEW_PARAM);
-}
-
-function getAccount() {
-    return isLocalPreview() ? PREVIEW_ACCOUNT : null;
-}
-
-function signIn() {
-    return { ok: false, message: 'Sign-in is coming soon. Unmark Me works without an account in the meantime.' };
-}
-
-function signOut() {
-    if (!isLocalPreview()) return;
-    const url = new URL(location.href);
-    url.searchParams.delete(PREVIEW_PARAM);
-    history.replaceState(null, '', url);
+async function callAuth(path, body) {
+    let response;
+    try {
+        response = await fetch(`/api/auth/${path}`, body === undefined
+            ? { credentials: 'same-origin', cache: 'no-store' }
+            : {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+    } catch {
+        return { ok: false, error: UNAVAILABLE };
+    }
+    const data = await response.json().catch(() => null);
+    if (!data) return { ok: false, error: UNAVAILABLE };
+    return response.ok ? { ok: true, ...data } : { ok: false, error: data.error || UNAVAILABLE };
 }
 
 function initials(name) {
@@ -68,14 +59,39 @@ function buildSignInSheet() {
         </span>
         <h2 id="authTitle" class="auth-title">Log in to Unmark Me</h2>
         <p class="auth-lede">Keep your plan with you on every device.</p>
-        <div class="auth-options">
-            <button type="button" class="auth-option" data-provider="google">${GOOGLE_ICON}<span>Continue with Google</span></button>
-            <button type="button" class="auth-option" data-provider="email">${MAIL_ICON}<span>Continue with email</span></button>
-        </div>
+        <div class="auth-step"></div>
         <p class="auth-status" role="status" aria-live="polite"></p>
         <p class="auth-privacy">${LOCK_ICON}<span>We only use your name and email to sign you in. ${PRIVACY_NOTE}</span></p>
     </div>`;
     return dialog;
+}
+
+const CHOOSE_STEP = `
+    <div class="auth-options">
+        <button type="button" class="auth-option" data-provider="google">${GOOGLE_ICON}<span>Continue with Google</span></button>
+        <button type="button" class="auth-option" data-provider="email">${MAIL_ICON}<span>Continue with email</span></button>
+    </div>`;
+
+const EMAIL_STEP = `
+    <form class="auth-form" novalidate>
+        <label class="auth-label" for="authEmail">Email</label>
+        <input id="authEmail" class="auth-input" type="email" name="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
+        <button type="submit" class="auth-submit">Send code</button>
+        <button type="button" class="auth-link" data-action="back">Back</button>
+    </form>`;
+
+function codeStep(email) {
+    return `
+    <form class="auth-form" novalidate>
+        <p class="auth-sent">We sent a 6-digit code to <strong>${escapeHtml(email)}</strong>.</p>
+        <label class="auth-label" for="authCode">Code</label>
+        <input id="authCode" class="auth-input auth-code" type="text" name="code" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" required>
+        <button type="submit" class="auth-submit">Log in</button>
+        <div class="auth-links">
+            <button type="button" class="auth-link" data-action="resend">Send a new code</button>
+            <button type="button" class="auth-link" data-action="change-email">Use a different email</button>
+        </div>
+    </form>`;
 }
 
 function buildProfilePopover() {
@@ -116,11 +132,16 @@ export function mountAccountMenu(button) {
     const label = button.querySelector('.account-label');
     const sheet = buildSignInSheet();
     const popover = buildProfilePopover();
+    const title = sheet.querySelector('.auth-title');
+    const lede = sheet.querySelector('.auth-lede');
+    const step = sheet.querySelector('.auth-step');
     const status = sheet.querySelector('.auth-status');
     document.body.append(sheet, popover);
 
+    let account = null;
+    let pendingEmail = '';
+
     function renderButton() {
-        const account = getAccount();
         button.classList.toggle('is-signed-in', Boolean(account));
         if (account) {
             button.innerHTML = `<span class="account-initials" aria-hidden="true">${escapeHtml(initials(account.name))}</span>`;
@@ -135,6 +156,103 @@ export function mountAccountMenu(button) {
         button.setAttribute('aria-haspopup', 'dialog');
     }
 
+    function setStatus(message = '') {
+        status.textContent = message;
+    }
+
+    // Disables the form while a request is in flight and shows progress on its button.
+    async function busy(form, pendingLabel, task) {
+        const submit = form.querySelector('.auth-submit');
+        const idleLabel = submit.textContent;
+        for (const control of form.elements) control.disabled = true;
+        submit.textContent = pendingLabel;
+        try {
+            return await task();
+        } finally {
+            for (const control of form.elements) control.disabled = false;
+            submit.textContent = idleLabel;
+        }
+    }
+
+    function showChooseStep() {
+        title.textContent = 'Log in to Unmark Me';
+        lede.textContent = 'Keep your plan with you on every device.';
+        step.innerHTML = CHOOSE_STEP;
+        step.querySelector('[data-provider="google"]').addEventListener('click', () => setStatus(GOOGLE_COMING_SOON));
+        step.querySelector('[data-provider="email"]').addEventListener('click', () => showEmailStep());
+    }
+
+    function showEmailStep() {
+        title.textContent = 'Log in with email';
+        lede.textContent = "We'll email you a code. No password needed.";
+        step.innerHTML = EMAIL_STEP;
+        setStatus('');
+        const form = step.querySelector('form');
+        const input = form.elements.email;
+        input.value = pendingEmail;
+        input.focus();
+        form.querySelector('[data-action="back"]').addEventListener('click', () => {
+            setStatus('');
+            showChooseStep();
+        });
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const email = input.value.trim();
+            if (!input.checkValidity() || !email) {
+                setStatus('Enter a valid email address.');
+                input.focus();
+                return;
+            }
+            const result = await busy(form, 'Sending…', () => callAuth('email/start', { email }));
+            if (!result.ok) {
+                setStatus(result.error);
+                input.focus();
+                return;
+            }
+            pendingEmail = email;
+            showCodeStep();
+        });
+    }
+
+    function showCodeStep() {
+        title.textContent = 'Check your email';
+        lede.textContent = 'Enter the code to finish logging in.';
+        step.innerHTML = codeStep(pendingEmail);
+        setStatus('');
+        const form = step.querySelector('form');
+        const input = form.elements.code;
+        input.focus();
+        input.addEventListener('input', () => {
+            input.value = input.value.replace(/\D/g, '').slice(0, 6);
+        });
+        form.querySelector('[data-action="change-email"]').addEventListener('click', () => showEmailStep());
+        form.querySelector('[data-action="resend"]').addEventListener('click', async () => {
+            const result = await busy(form, 'Sending…', () => callAuth('email/start', { email: pendingEmail }));
+            setStatus(result.ok ? 'A new code is on its way.' : result.error);
+            input.value = '';
+            input.focus();
+        });
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (input.value.length !== 6) {
+                setStatus('Enter the 6-digit code from the email.');
+                input.focus();
+                return;
+            }
+            const result = await busy(form, 'Checking…', () => callAuth('email/verify', { email: pendingEmail, code: input.value }));
+            if (!result.ok) {
+                setStatus(result.error);
+                input.select();
+                return;
+            }
+            account = result.user;
+            pendingEmail = '';
+            sheet.close();
+            renderButton();
+            button.focus();
+        });
+    }
+
     // Anchor the profile menu to the button so it grows out of it.
     function placePopover() {
         const rect = button.getBoundingClientRect();
@@ -143,11 +261,11 @@ export function mountAccountMenu(button) {
     }
 
     popover.addEventListener('beforetoggle', (event) => {
-        const account = getAccount();
         if (event.newState !== 'open' || !account) return;
         renderProfile(popover, account);
-        popover.querySelector('.profile-logout').addEventListener('click', () => {
-            signOut();
+        popover.querySelector('.profile-logout').addEventListener('click', async () => {
+            await callAuth('logout', {});
+            account = null;
             popover.hidePopover();
             renderButton();
             button.focus();
@@ -156,8 +274,9 @@ export function mountAccountMenu(button) {
     });
 
     button.addEventListener('click', () => {
-        if (getAccount()) return;
-        status.textContent = '';
+        if (account) return;
+        setStatus('');
+        showChooseStep();
         sheet.showModal();
     });
 
@@ -166,16 +285,16 @@ export function mountAccountMenu(button) {
     sheet.addEventListener('click', (event) => {
         if (event.target === sheet) sheet.close();
     });
-    for (const option of sheet.querySelectorAll('.auth-option')) {
-        option.addEventListener('click', () => {
-            const result = signIn(option.dataset.provider);
-            if (!result.ok) status.textContent = result.message;
-        });
-    }
 
     window.addEventListener('resize', () => {
         if (popover.matches?.(':popover-open')) placePopover();
     });
 
     renderButton();
+    callAuth('session').then((result) => {
+        if (result.ok && result.user) {
+            account = result.user;
+            renderButton();
+        }
+    });
 }

@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
 import { extname, join, normalize, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { execSync } from 'child_process';
 
 const require = createRequire(import.meta.url);
@@ -224,7 +225,49 @@ const findAvailablePort = (startPort, maxAttempts = 20) => new Promise((resolveP
   tryPort(startPort, maxAttempts);
 });
 
+// Runs the api/ route files the way Vercel does (Web Request in, Response out),
+// so sign-in works against the local database during development.
+async function handleDevApiRequest(req, res, urlPath) {
+  const apiRoot = resolve('api');
+  const routeFile = resolve(join(apiRoot, `${normalize(urlPath.slice('/api/'.length))}.js`));
+  const sendJson = (status, body) => {
+    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(body));
+  };
+  if (!routeFile.startsWith(apiRoot + '/') || !existsSync(routeFile)) {
+    sendJson(404, { error: 'Not found' });
+    return;
+  }
+  const route = await import(pathToFileURL(routeFile).href);
+  const handler = route[req.method];
+  if (typeof handler !== 'function') {
+    sendJson(405, { error: 'Method not allowed' });
+    return;
+  }
+
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const hasBody = !['GET', 'HEAD'].includes(req.method) && chunks.length > 0;
+  const request = new Request(`http://${req.headers.host}${req.url}`, {
+    method: req.method,
+    headers: req.headers,
+    body: hasBody ? Buffer.concat(chunks) : undefined
+  });
+  const response = await handler(request);
+
+  const headers = {};
+  response.headers.forEach((value, name) => {
+    if (name !== 'set-cookie') headers[name] = value;
+  });
+  const cookies = response.headers.getSetCookie();
+  if (cookies.length) headers['set-cookie'] = cookies;
+  res.writeHead(response.status, headers);
+  res.end(Buffer.from(await response.arrayBuffer()));
+}
+
 async function serveStaticDevDist(rootDir = 'dist', defaultPort = 4173) {
+  // Local settings such as DATABASE_URL live in the git-ignored .env file.
+  if (existsSync('.env')) process.loadEnvFile('.env');
   const distRoot = resolve(rootDir);
   const startPort = Number(process.env.PORT || defaultPort);
   const port = await findAvailablePort(startPort);
@@ -236,6 +279,14 @@ async function serveStaticDevDist(rootDir = 'dist', defaultPort = 4173) {
     } catch {
       res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
       res.end('Bad Request');
+      return;
+    }
+    if (urlPath.startsWith('/api/')) {
+      handleDevApiRequest(req, res, urlPath).catch((error) => {
+        console.error('API request failed:', error);
+        if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'Internal error' }));
+      });
       return;
     }
     // In dev mode, expose the internal single-image debug harness at `/`

@@ -439,6 +439,92 @@ img { -webkit-user-drag: none; }
 
 .auth-status:empty { display: none; }
 
+.auth-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  text-align: left;
+}
+
+.auth-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--label-2);
+}
+
+.auth-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--label);
+  font: inherit;
+  font-size: 1rem;
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.auth-code {
+  padding-left: calc(14px + 0.4em);
+  text-align: center;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.4em;
+}
+
+.auth-submit {
+  height: 46px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: background-color var(--fast) var(--ease), transform var(--fast) var(--ease), opacity var(--fast) var(--ease);
+}
+
+.auth-submit:hover:not(:disabled) { background: var(--accent-hover); }
+.auth-submit:active:not(:disabled) { background: var(--accent-press); transform: scale(0.98); }
+.auth-submit:disabled { opacity: 0.6; cursor: default; }
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+}
+
+.auth-link {
+  justify-self: center;
+  height: auto;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.auth-link:hover:not(:disabled) { background: none; text-decoration: underline; text-underline-offset: 3px; }
+.auth-link:active:not(:disabled) { background: none; transform: none; }
+
+.auth-sent {
+  margin: 0 0 4px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--label-2);
+}
+
+.auth-sent strong { color: var(--label); font-weight: 600; overflow-wrap: anywhere; }
+
 .auth-privacy,
 .profile-privacy {
   display: flex;

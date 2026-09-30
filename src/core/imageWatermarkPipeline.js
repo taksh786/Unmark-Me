@@ -10,6 +10,7 @@ import { attachTopNSelectionMeta } from './pipelineMeta.js';
 import { createRejectedPipelineResult } from './pipelineResult.js';
 import { runAcceptedAlphaRepairPipeline } from './pipelineAcceptedExecutor.js';
 import { createAcceptedPipelineFinalResult } from './pipelineFinalization.js';
+import { correctOverSubtractedWatermark } from './overSubtractionGuard.js';
 
 function createSelectedCandidate(best) {
     const hypothesis = best?.hypothesis ?? {};
@@ -24,6 +25,58 @@ function createSelectedCandidate(best) {
         position: meta.position ?? hypothesis.position ?? trial.position ?? null,
         alphaProfile: hypothesis.alphaProfile ?? null,
         polarity: hypothesis.polarity ?? null
+    };
+}
+
+// Re-solves the selected result at a lower alpha gain when it left a darker
+// logo imprint; see overSubtractionGuard.js for why the ranking can miss it.
+function applyOverSubtractionGuard({
+    candidate,
+    originalImageData,
+    cloneImageData,
+    measureCandidate
+}) {
+    const state = candidate.pipelineState;
+    const correction = correctOverSubtractedWatermark({
+        originalImageData,
+        imageData: candidate.result.imageData,
+        alphaMap: state?.alphaMap,
+        position: state?.position,
+        alphaGain: state?.alphaGain,
+        cloneImageData
+    });
+    if (!correction) return candidate;
+
+    const meta = candidate.result.meta ?? {};
+    return {
+        ...candidate,
+        pipelineState: { ...state, alphaGain: correction.alphaGain },
+        result: {
+            ...candidate.result,
+            imageData: correction.imageData,
+            meta: {
+                ...meta,
+                alphaGain: correction.alphaGain,
+                source: `${meta.source}+over-subtraction-guard`,
+                overSubtractionGuard: {
+                    fromAlphaGain: state.alphaGain,
+                    toAlphaGain: correction.alphaGain,
+                    edgeContrastBefore: correction.edgeContrastBefore,
+                    edgeContrastAfter: correction.edgeContrastAfter
+                }
+            }
+        },
+        qualitySignals: measureCandidate({
+            originalImageData,
+            candidateImageData: correction.imageData,
+            hypothesis: candidate.hypothesis,
+            finalCandidate: {
+                position: state.position,
+                alphaMap: state.alphaMap,
+                alphaGain: correction.alphaGain,
+                darkBackgroundSupportConvergence: findDarkBackgroundSupportConvergence(meta)
+            }
+        })
     };
 }
 
@@ -278,8 +331,8 @@ export function runImageWatermarkPipeline({
 
     const rankingStartedAt = nowMs();
     const ranked = rankCandidates(completed);
-    const best = ranked[0];
-    if (!best?.result?.imageData) {
+    const top = ranked[0];
+    if (!top?.result?.imageData) {
         failures.push({
             hypothesis: null,
             error: new Error('Candidate ranking returned no valid result')
@@ -300,6 +353,12 @@ export function runImageWatermarkPipeline({
         };
     }
 
+    const best = applyOverSubtractionGuard({
+        candidate: top,
+        originalImageData,
+        cloneImageData,
+        measureCandidate
+    });
     const candidateSummaries = createSummaries(ranked, failures);
     const selectionMeta = attachSelectionMeta(best.result.meta, {
         qualityStatus: best.qualitySignals?.qualityStatus,

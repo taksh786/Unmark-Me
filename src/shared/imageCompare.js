@@ -7,12 +7,10 @@
 // The knob is exactly under the pointer; the two ends of the line follow on an
 // under-damped spring, so a hard swing bends the line into a curve that settles
 // straight when you stop. The original is clipped along the same curve, so the
-// picture's edge bends with the line. While the line moves, the cleaned layer
-// drifts a few pixels against it, which reads as two sheets with depth between
-// them; at rest the layers line up exactly so pixels can be compared.
+// picture's edge bends with the line. Both pictures stay still and pixel-aligned
+// the whole time; only the line and the cut move.
 
 const MAX_BEND = 9;
-const DRIFT_PER_BEND = 0.4;
 const SPRING_STIFFNESS = 620;
 const SPRING_DAMPING = 44;
 const GLIDE_REMAINDER_PER_SECOND = 0.0004;
@@ -28,7 +26,6 @@ function prefersReducedMotion() {
 export function createImageCompare({
     container,
     beforeImage,
-    afterLayer,
     grip,
     linePath,
     lineSvg,
@@ -61,7 +58,6 @@ export function createImageCompare({
         beforeImage.style.clipPath = active
             ? `path("M 0 0 L ${curve} L 0 ${height} Z")`
             : '';
-        afterLayer.style.transform = `translateX(${(-bend * DRIFT_PER_BEND).toFixed(2)}px)`;
         grip.style.left = `${x}px`;
         beforeTag.style.opacity = String(clamp((position - 0.14) * 4, 0, 1));
         afterTag.style.opacity = String(clamp((0.86 - position) * 4, 0, 1));

@@ -622,7 +622,6 @@ function setupImageCompare() {
     imageCompare = createImageCompare({
         container: comparisonContainer,
         beforeImage: originalImage,
-        afterLayer: processedOverlay,
         grip: sliderHandle,
         lineSvg: comparisonContainer.querySelector('.cmp-line'),
         linePath: comparisonContainer.querySelector('.cmp-line path'),

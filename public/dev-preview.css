@@ -774,7 +774,6 @@ body[data-view="batch"] .hero { display: none; }
   z-index: 1;
   overflow: hidden;
   border-radius: var(--radius-sm);
-  will-change: transform;
 }
 
 .cmp-img {

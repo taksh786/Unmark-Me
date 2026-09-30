@@ -79,18 +79,19 @@
     <section id="singlePreview" class="workspace" style="display: none;" aria-label="Result">
       <div class="viewer card">
         <div class="stage">
-          <div id="comparisonContainer" class="compare w-fit max-w-full">
-            <img id="originalImage" class="compare-image w-auto h-auto max-w-full object-right-bottom" alt="Original image" draggable="false" />
-            <div id="processedOverlay" class="compare-overlay" style="display: none;">
-              <img id="processedImage" class="compare-overlay-image object-right-bottom" alt="Cleaned image" draggable="false" />
+          <div id="comparisonContainer" class="cmp w-fit max-w-full" role="slider" tabindex="-1" aria-label="Compare original and cleaned" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            <div id="processedOverlay" class="cmp-after" style="display: none;">
+              <img id="processedImage" class="cmp-img object-right-bottom" alt="Cleaned image" draggable="false" />
             </div>
-            <div id="sliderHandle" class="compare-handle" style="left: 50%; display: none;" role="slider" tabindex="0" aria-label="Compare original and cleaned" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
-              <span class="compare-knob" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></svg>
+            <img id="originalImage" class="cmp-before w-auto h-auto max-w-full object-right-bottom" alt="Original image" draggable="false" />
+            <span class="cmp-tag cmp-tag-before" aria-hidden="true">Before</span>
+            <span class="cmp-tag cmp-tag-after" aria-hidden="true">After</span>
+            <svg class="cmp-line" aria-hidden="true" preserveAspectRatio="none"><path /></svg>
+            <span id="sliderHandle" class="cmp-grip" style="display: none;" aria-hidden="true">
+              <span class="cmp-knob">
+                <svg width="16" height="10" viewBox="0 0 16 10"><path d="M5 1 1 5l4 4M11 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
               </span>
-            </div>
-            <span class="pill pill-left" aria-hidden="true">Cleaned</span>
-            <span class="pill pill-right" aria-hidden="true">Original</span>
+            </span>
           </div>
         </div>
       </div>

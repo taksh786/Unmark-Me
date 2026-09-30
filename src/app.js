@@ -22,6 +22,7 @@ import {
     saveDebugFileHandoff
 } from './shared/debugFileHandoff.js';
 import { mountAccountMenu } from './shared/accountMenu.js';
+import { createImageCompare } from './shared/imageCompare.js';
 import { mountThemeSwitch } from './shared/themeSwitch.js';
 
 const TEXT = {
@@ -72,6 +73,8 @@ const resetBtn = document.getElementById('resetBtn');
 const batchResetBtn = document.getElementById('batchResetBtn');
 const processedOverlay = document.getElementById('processedOverlay');
 const sliderHandle = document.getElementById('sliderHandle');
+const comparisonContainer = document.getElementById('comparisonContainer');
+let imageCompare = null;
 
 async function getEngine() {
     if (!enginePromise) {
@@ -142,7 +145,7 @@ async function init() {
 
         hideLoading();
         setupEventListeners();
-        setupSlider();
+        setupImageCompare();
         await consumePendingImageHandoff();
     } catch (error) {
         hideLoading();
@@ -215,6 +218,7 @@ function reset() {
     delete singlePreview.dataset.state;
     processedOverlay.style.display = 'none';
     sliderHandle.style.display = 'none';
+    imageCompare?.reset();
     copyBtn.style.display = 'none';
     downloadBtn.style.display = 'none';
     setStatusMessage('');
@@ -282,6 +286,7 @@ async function handleFiles(files) {
     processedInfo.style.display = 'none';
     processedOverlay.style.display = 'none';
     sliderHandle.style.display = 'none';
+    imageCompare?.reset();
     copyBtn.style.display = 'none';
     downloadBtn.style.display = 'none';
     singlePreview.dataset.state = 'processing';
@@ -411,10 +416,11 @@ async function processSingle(item) {
 
         processedImage.src = item.processedUrl;
         processedOverlay.style.display = 'block';
-        sliderHandle.style.display = 'flex';
+        sliderHandle.style.display = 'block';
         originalInfo.style.display = 'none';
         processedInfo.style.display = 'block';
         singlePreview.dataset.state = 'done';
+        imageCompare?.activate();
 
         copyBtn.style.display = 'flex';
         copyBtn.onclick = () => copyImage(item);
@@ -612,53 +618,16 @@ function downloadImage(item) {
     a.click();
 }
 
-function setupSlider() {
-    const container = document.getElementById('comparisonContainer');
-    let activePointer = null;
-
-    function setPosition(percent) {
-        const clamped = Math.min(Math.max(percent, 0), 100);
-        processedOverlay.style.width = `${clamped}%`;
-        sliderHandle.style.left = `${clamped}%`;
-        sliderHandle.setAttribute('aria-valuenow', String(Math.round(clamped)));
-    }
-
-    function moveTo(clientX) {
-        const rect = container.getBoundingClientRect();
-        if (!rect.width) return;
-        setPosition(((clientX - rect.left) / rect.width) * 100);
-    }
-
-    container.addEventListener('pointerdown', (e) => {
-        if (processedOverlay.style.display === 'none') return;
-        activePointer = e.pointerId;
-        container.setPointerCapture(e.pointerId);
-        moveTo(e.clientX);
-    });
-    container.addEventListener('pointermove', (e) => {
-        if (e.pointerId !== activePointer) return;
-        moveTo(e.clientX);
-    });
-    const release = (e) => {
-        if (e.pointerId === activePointer) activePointer = null;
-    };
-    container.addEventListener('pointerup', release);
-    container.addEventListener('pointercancel', release);
-
-    sliderHandle.addEventListener('keydown', (e) => {
-        const current = Number(sliderHandle.getAttribute('aria-valuenow')) || 50;
-        const step = e.shiftKey ? 10 : 2;
-        const next = {
-            ArrowLeft: current - step,
-            ArrowDown: current - step,
-            ArrowRight: current + step,
-            ArrowUp: current + step,
-            Home: 0,
-            End: 100
-        }[e.key];
-        if (next === undefined) return;
-        e.preventDefault();
-        setPosition(next);
+function setupImageCompare() {
+    imageCompare = createImageCompare({
+        container: comparisonContainer,
+        beforeImage: originalImage,
+        afterLayer: processedOverlay,
+        grip: sliderHandle,
+        lineSvg: comparisonContainer.querySelector('.cmp-line'),
+        linePath: comparisonContainer.querySelector('.cmp-line path'),
+        beforeTag: comparisonContainer.querySelector('.cmp-tag-before'),
+        afterTag: comparisonContainer.querySelector('.cmp-tag-after')
     });
 }
 

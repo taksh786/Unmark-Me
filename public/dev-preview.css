@@ -745,82 +745,95 @@ body[data-view="batch"] .hero { display: none; }
   background: repeating-conic-gradient(var(--checker-a) 0 25%, var(--checker-b) 0 50%) 0 0 / 20px 20px;
 }
 
-.compare {
+/* Before / after compare (see src/shared/imageCompare.js). The original sits
+   in flow and sizes the frame; the cleaned layer lies underneath it. */
+.cmp {
   position: relative;
   margin: 0 auto;
   user-select: none;
+  -webkit-user-select: none;
   touch-action: pan-y;
-  cursor: ew-resize;
+  outline: none;
 }
 
-.compare-image {
+.workspace[data-state="done"] .cmp { cursor: ew-resize; }
+.cmp[data-held] { cursor: grabbing !important; }
+
+.cmp-before {
+  position: relative;
+  z-index: 2;
   display: block;
+  border-radius: var(--radius-sm);
   max-height: calc(100dvh - var(--chrome));
   object-fit: contain;
 }
 
-.compare-overlay {
+.cmp-after {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 100%;
+  inset: 0;
+  z-index: 1;
   overflow: hidden;
-  z-index: 10;
-  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.95), 2px 0 8px rgba(0, 0, 0, 0.18);
+  border-radius: var(--radius-sm);
+  will-change: transform;
 }
 
-.compare-overlay-image {
+.cmp-img {
   display: block;
-  width: auto;
+  width: 100%;
   height: 100%;
-  max-width: none;
-  object-fit: contain;
 }
 
-.compare-handle {
+.cmp-line {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 44px;
-  margin-left: -22px;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: ew-resize;
-  touch-action: none;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.95);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.28));
 }
 
-.compare-handle:focus-visible { outline: none; }
+.cmp-grip {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
 
-.compare-knob {
-  width: 36px;
-  height: 36px;
+.cmp-knob {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.92);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
   color: #1d1d1f;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 4px 14px rgba(0, 0, 0, 0.18);
-  transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 4px 14px rgba(0, 0, 0, 0.2);
+  transition: transform var(--base) var(--ease-out), box-shadow var(--base) var(--ease-out);
 }
 
-.compare-knob svg { width: 16px; height: 16px; }
-
-.compare:active .compare-knob,
-.compare-handle:hover .compare-knob { transform: scale(1.08); }
-
-.compare-handle:focus-visible .compare-knob {
-  box-shadow: 0 0 0 3px var(--accent), 0 4px 14px rgba(0, 0, 0, 0.18);
+.cmp:hover .cmp-knob { transform: scale(1.06); }
+.cmp[data-held] .cmp-knob {
+  transform: scale(0.92);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.22);
 }
+.cmp:focus-visible .cmp-knob { box-shadow: 0 0 0 3px var(--accent), 0 4px 14px rgba(0, 0, 0, 0.2); }
 
-.pill {
+.cmp-tag {
   position: absolute;
   top: 12px;
-  z-index: 30;
+  z-index: 3;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
   background: rgba(0, 0, 0, 0.5);
@@ -832,14 +845,14 @@ body[data-view="batch"] .hero { display: none; }
   letter-spacing: 0.01em;
   pointer-events: none;
   opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity var(--base) var(--ease), transform var(--base) var(--ease-out);
 }
 
-.pill-left { left: 12px; }
-.pill-right { right: 12px; }
+.cmp-tag-before { left: 12px; }
+.cmp-tag-after { right: 12px; }
 
-.workspace[data-state="done"] .pill { opacity: 1; transform: none; }
+/* The line, knob and tags only exist once there is a result to compare. */
+.workspace:not([data-state="done"]) .cmp-line,
+.workspace:not([data-state="done"]) .cmp-tag { visibility: hidden; }
 
 /* Processing shimmer over the original while the result is computed. */
 .workspace[data-state="processing"] .stage::after {
@@ -1225,7 +1238,8 @@ body[data-view="batch"] .hero { display: none; }
 @media (prefers-reduced-transparency: reduce) {
   .nav { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .loading-overlay { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .pill, .batch-pane-label { background: #1d1d1f; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .cmp-tag, .cmp-knob, .batch-pane-label { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .cmp-tag, .batch-pane-label { background: #1d1d1f; }
 }
 
 @media (prefers-contrast: more) {
